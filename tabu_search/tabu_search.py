@@ -1,5 +1,6 @@
 import sys
 import math
+from random import randint
 
 in_data = sys.stdin.readlines()
 
@@ -7,11 +8,11 @@ n = int(float(in_data[0]))
 data = [[float(l) for l in line.split()[1:]] for line in in_data[1:]]
 
 # print(n)
-# print(data)
+#print(data)
 
 distance = [[math.hypot(x2-x1, y2-y1) for (x2, y2) in data] for (x1, y1) in data]
 
-# print(distance)
+#print(distance)
 
 inf = float('inf')
 
@@ -47,12 +48,16 @@ for i in range(1, n):
     # `current_node-1` as python indexes from 0 when nodes are numbered from 1
     # increase calculated index by 1 for same reason as above
     current_route[i] = index_min(distance_copy, current_node-1) + 1
+
     # increase cost by distance from last to current node
     current_cost += distance[current_node-1][current_route[i]-1]
+
     # update `current_node` to one determined in this iteration
     current_node = current_route[i]
+
     # set distance from current node to node 1 to infinity to make sure we won't get back to 1 too soon
     distance_copy[current_node-1][0] = inf
+
     # for all nodes on route determined earlier set distance between current node and them to infinity
     # to make sure we won't visit one node more than one time
     for determined_route_node in range(i+1):
@@ -61,10 +66,58 @@ for i in range(1, n):
 # increase cost by distance from last visited node to node 1 as we have to go back to start
 current_cost += distance[current_route[n]-1][0]
 
-print(current_route)
-print(current_cost)
+# print(current_route)
+# print(current_cost)
 
 best_route = list(current_route)
 best_cost = current_cost
 
 # TSP TABU-SEARCH START
+
+
+def count_cost(new_perm):
+    cost = 0
+    for x in range(0, 2):
+        print(x)
+        print(new_perm[x])
+        print(new_perm[x+1])
+        cost += distance[new_perm[x]-1][new_perm[x+1]-1]
+    return cost
+
+
+def swap(curr, i, j):
+    while i == j:
+        i = random_index()
+        j = random_index()
+    perm = list(curr)
+    perm[i] = curr[j]
+    perm[j] = curr[i]
+    return perm
+
+
+def random_index():
+    rand = randint(1, n-1)
+    return rand
+#print(swap([1,2,3], 0, 2))
+# print(distance[0][2])
+# print(count_cost([1, 2, 3]))
+
+#tabu = [[0 for x in range(n)] for y in range(n)]
+tabu = []
+
+for i in range(20):
+    perm_route = swap(current_route, random_index(), random_index())
+    if count_cost(perm_route) > current_cost:
+        tabu.append(perm_route)
+    else:
+        tabu.append(current_route)
+        current_cost = count_cost(perm_route)
+        current_route = perm_route
+
+print(current_route)
+print(current_cost)
+
+
+
+
+
