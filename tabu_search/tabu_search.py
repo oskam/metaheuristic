@@ -8,15 +8,15 @@ n = int(float(in_data[0]))
 data = [[float(l) for l in line.split()[1:]] for line in in_data[1:]]
 
 # print(n)
-#print(data)
+# print(data)
 
-distance = [[math.hypot(x2-x1, y2-y1) for (x2, y2) in data] for (x1, y1) in data]
+distance = [[math.hypot(x2 - x1, y2 - y1) for (x2, y2) in data] for (x1, y1) in data]
 
 #print(distance)
 
 inf = float('inf')
 
-current_route = [None]*(n+1)
+current_route = [0] * (n + 1)
 current_cost = 0
 
 current_route[0] = 1
@@ -40,84 +40,102 @@ def index_min(matrix, k):
             index = ii
     return index
 
-# set current node to `current_route[0]` = 1
+
 current_node = current_route[0]
-# i is in range from 1 to n-1 because `current_route[0]` and `current_route[n]` are set to 1
-for i in range(1, n):
-    # set next visited node to index of node with minimum distance from last determined
-    # `current_node-1` as python indexes from 0 when nodes are numbered from 1
-    # increase calculated index by 1 for same reason as above
-    current_route[i] = index_min(distance_copy, current_node-1) + 1
 
-    # increase cost by distance from last to current node
-    current_cost += distance[current_node-1][current_route[i]-1]
+for i in range(1, len(current_route) - 1):
 
-    # update `current_node` to one determined in this iteration
+    current_route[i] = index_min(distance_copy, int(current_node) - 1) + 1
     current_node = current_route[i]
+    distance_copy[int(current_node) - 1][0] = inf
 
-    # set distance from current node to node 1 to infinity to make sure we won't get back to 1 too soon
-    distance_copy[current_node-1][0] = inf
+    for determined_route_node in range(i + 1):
+        distance_copy[int(current_node) - 1][current_route[determined_route_node] - 1] = inf
 
-    # for all nodes on route determined earlier set distance between current node and them to infinity
-    # to make sure we won't visit one node more than one time
-    for determined_route_node in range(i+1):
-        distance_copy[int(current_node)-1][current_route[determined_route_node]-1] = inf
+for j in range(0, len(current_route) - 1):
+    # increase cost by distance from last to current node
+    current_cost += distance[current_route[j] - 1][current_route[j + 1] - 1]
 
-# increase cost by distance from last visited node to node 1 as we have to go back to start
-current_cost += distance[current_route[n]-1][0]
+# current_cost += distance[current_route[n]-1][0]
 
-# print(current_route)
-# print(current_cost)
+#print(current_route)
+print(current_cost)
 
 best_route = list(current_route)
 best_cost = current_cost
 
+neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in (x + 1, len(current_route) - 2)]
+
+
 # TSP TABU-SEARCH START
+iterations = 100
+checks = (math.sqrt(len(neighbor_set)))
+p = 10
+
+tabu = [-p] * n
+
+neighbor_route = [0] * (n + 1)
+neighbor_cost = 0
+
+best_neighbor_route = list(best_route)
+best_neighbor_cost = best_cost
+
+
+def random_indexes(neighbor):
+    x = randint(0, len(neighbor) - 1)
+    return neighbor.pop(x)
+
+
+def is_tabbed(x, y):
+    return iterations - tabu[x] < p or iterations - tabu[y] < p
+
+
+def swap(current, x, y):
+    perm = list(current)
+    perm[x], perm[y] = current[y], current[x]
+    perm[y] = current[x]
+    return perm
 
 
 def count_cost(new_perm):
     cost = 0
-    for x in range(0, 2):
-        print(x)
-        print(new_perm[x])
-        print(new_perm[x+1])
-        cost += distance[new_perm[x]-1][new_perm[x+1]-1]
+    for x in range(0, len(new_perm)-1):
+        cost += distance[new_perm[x] - 1][new_perm[x + 1] - 1]
     return cost
 
 
-def swap(curr, i, j):
-    while i == j:
-        i = random_index()
-        j = random_index()
-    perm = list(curr)
-    perm[i] = curr[j]
-    perm[j] = curr[i]
-    return perm
+for i in range(0, iterations):
 
+    current_route = list(best_neighbor_route)
+    current_cost = best_neighbor_cost
 
-def random_index():
-    rand = randint(1, n-1)
-    return rand
-#print(swap([1,2,3], 0, 2))
-# print(distance[0][2])
-# print(count_cost([1, 2, 3]))
+    neighbor_set_copy = list(neighbor_set)
 
-#tabu = [[0 for x in range(n)] for y in range(n)]
-tabu = []
+    checked = 0
 
-for i in range(20):
-    perm_route = swap(current_route, random_index(), random_index())
-    if count_cost(perm_route) > current_cost:
-        tabu.append(perm_route)
-    else:
-        tabu.append(current_route)
-        current_cost = count_cost(perm_route)
-        current_route = perm_route
+    while checked < int(math.ceil(checks)) and len(neighbor_set_copy)>0:
+        x, y = random_indexes(neighbor_set_copy)
+        x, y = int(x), int(y)
 
-print(current_route)
-print(current_cost)
+        if not is_tabbed(current_route[x]-1, current_route[y]-1):
+            checked += 1
+            neighbor_route = list(current_route)
+            neighbor_route[x], neighbor_route[y] = neighbor_route[y], neighbor_route[x]
+            neighbor_cost = count_cost(neighbor_route)
 
+            if neighbor_cost <= best_neighbor_cost:
+                best_neighbor_route = list(neighbor_route)
+                best_neighbor_cost = neighbor_cost
 
+            tabu[current_route[x]-1] = i
+            tabu[current_route[y]-1] = i
+                # musimy dodać do tabu pozostałe sąsiedztwo obecnie badanego rozwiazania
+                # for (x, y) in Ncopy:
+                # zaktualizuj liste tabu dla current_route[x], current_route[y]
 
+    if best_neighbor_cost <= best_cost:
+        best_route = list(best_neighbor_route)
+        best_cost = best_neighbor_cost
 
-
+#print(best_route)
+print(best_cost)
