@@ -53,10 +53,8 @@ for i in range(1, len(current_route) - 1):
         distance_copy[int(current_node) - 1][current_route[determined_route_node] - 1] = inf
 
 for j in range(0, len(current_route) - 1):
-    # increase cost by distance from last to current node
     current_cost += distance[current_route[j] - 1][current_route[j + 1] - 1]
 
-# current_cost += distance[current_route[n]-1][0]
 
 #print(current_route)
 print(current_cost)
@@ -68,9 +66,9 @@ neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in (x + 1
 
 
 # TSP TABU-SEARCH START
-iterations = 100
+iterations = 500
 checks = (math.sqrt(len(neighbor_set)))
-p = 10
+p = 20
 
 tabu = [-p] * n
 
@@ -127,11 +125,15 @@ for i in range(0, iterations):
                 best_neighbor_route = list(neighbor_route)
                 best_neighbor_cost = neighbor_cost
 
-            tabu[current_route[x]-1] = i
-            tabu[current_route[y]-1] = i
+        tabu[current_route[x]-1] = i
+        tabu[current_route[y]-1] = i
+
                 # musimy dodać do tabu pozostałe sąsiedztwo obecnie badanego rozwiazania
                 # for (x, y) in Ncopy:
                 # zaktualizuj liste tabu dla current_route[x], current_route[y]
+    for x, y in neighbor_set_copy:
+        tabu[current_route[x] - 1] = i
+        tabu[current_route[y] - 1] = i
 
     if best_neighbor_cost <= best_cost:
         best_route = list(best_neighbor_route)
