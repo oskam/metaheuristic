@@ -1,7 +1,9 @@
 import sys
 import math
 from random import randint
+from time import time
 
+start = time()
 in_data = sys.stdin.readlines()
 
 n = int(float(in_data[0]))
@@ -12,7 +14,7 @@ data = [[float(l) for l in line.split()[1:]] for line in in_data[1:]]
 
 distance = [[math.hypot(x2 - x1, y2 - y1) for (x2, y2) in data] for (x1, y1) in data]
 
-#print(distance)
+# print(distance)
 
 inf = float('inf')
 
@@ -55,8 +57,9 @@ for i in range(1, len(current_route) - 1):
 for j in range(0, len(current_route) - 1):
     current_cost += distance[current_route[j] - 1][current_route[j + 1] - 1]
 
+# for k in current_route:
+#     sys.stderr.write(str(k) + "\n")
 
-#print(current_route)
 print(current_cost)
 
 best_route = list(current_route)
@@ -64,11 +67,10 @@ best_cost = current_cost
 
 neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in (x + 1, len(current_route) - 2)]
 
-
 # TSP TABU-SEARCH START
-iterations = 500
+iterations = 5000
 checks = (math.sqrt(len(neighbor_set)))
-p = 20
+p = (math.sqrt(n))
 
 tabu = [-p] * n
 
@@ -84,8 +86,13 @@ def random_indexes(neighbor):
     return neighbor.pop(x)
 
 
-def is_tabbed(x, y):
-    return iterations - tabu[x] < p or iterations - tabu[y] < p
+def is_tabbed(x, y, iteration):
+    return iteration - tabu[x] < p or iteration - tabu[y] < p
+
+
+def is_aspiring(x, y, cost, iteration):
+    p_percent_left = (p-min(iteration - tabu[x], iteration - tabu[y]))/p
+    return cost < best_neighbor_cost * (1.0 + p_percent_left)
 
 
 def swap(current, x, y):
@@ -97,10 +104,24 @@ def swap(current, x, y):
 
 def count_cost(new_perm):
     cost = 0
-    for x in range(0, len(new_perm)-1):
+    for x in range(0, len(new_perm) - 1):
         cost += distance[new_perm[x] - 1][new_perm[x + 1] - 1]
     return cost
 
+
+# def update_cost(old_route, old_cost, x, y):
+#     return old_cost \
+#            - distance[old_route[x]-1][old_route[x+1]-1] \
+#            - distance[old_route[x-1]-1][old_route[x]-1] \
+#            - distance[old_route[y]-1][old_route[y+1]-1] \
+#            - distance[old_route[y-1]-1][old_route[y]-1] \
+#            + distance[old_route[y]-1][old_route[x-1]-1] \
+#            + distance[old_route[y]-1][old_route[x+1]-1] \
+#            + distance[old_route[x]-1][old_route[y-1]-1] \
+#            + distance[old_route[x]-1][old_route[y+1]-1]
+
+
+print(time() - start)
 
 for i in range(0, iterations):
 
@@ -111,26 +132,38 @@ for i in range(0, iterations):
 
     checked = 0
 
-    while checked < int(math.ceil(checks)) and len(neighbor_set_copy)>0:
+    while checked < int(math.ceil(checks)) and len(neighbor_set_copy) > 0:
         x, y = random_indexes(neighbor_set_copy)
         x, y = int(x), int(y)
 
-        if not is_tabbed(current_route[x]-1, current_route[y]-1):
-            checked += 1
-            neighbor_route = list(current_route)
-            neighbor_route[x], neighbor_route[y] = neighbor_route[y], neighbor_route[x]
-            neighbor_cost = count_cost(neighbor_route)
+        if y - x > 1:
+            neighbor_cost = current_cost \
+                            - distance[current_route[x] - 1][current_route[x + 1] - 1] \
+                            - distance[current_route[x - 1] - 1][current_route[x] - 1] \
+                            - distance[current_route[y] - 1][current_route[y + 1] - 1] \
+                            - distance[current_route[y - 1] - 1][current_route[y] - 1] \
+                            + distance[current_route[y] - 1][current_route[x - 1] - 1] \
+                            + distance[current_route[y] - 1][current_route[x + 1] - 1] \
+                            + distance[current_route[x] - 1][current_route[y - 1] - 1] \
+                            + distance[current_route[x] - 1][current_route[y + 1] - 1]
+        else:
+            neighbor_cost = current_cost \
+                            - distance[current_route[x - 1] - 1][current_route[x] - 1] \
+                            - distance[current_route[y] - 1][current_route[y + 1] - 1] \
+                            + distance[current_route[y] - 1][current_route[x - 1] - 1] \
+                            + distance[current_route[x] - 1][current_route[y + 1] - 1]
 
+        if not is_tabbed(current_route[x] - 1, current_route[y] - 1, i) \
+                or is_aspiring(current_route[x] - 1, current_route[y] - 1, neighbor_cost, i):
+            checked += 1
             if neighbor_cost <= best_neighbor_cost:
-                best_neighbor_route = list(neighbor_route)
+                best_neighbor_route = list(current_route)
+                best_neighbor_route[x], best_neighbor_route[y] = best_neighbor_route[y], best_neighbor_route[x]
                 best_neighbor_cost = neighbor_cost
 
-        tabu[current_route[x]-1] = i
-        tabu[current_route[y]-1] = i
+        tabu[current_route[x] - 1] = i
+        tabu[current_route[y] - 1] = i
 
-                # musimy dodać do tabu pozostałe sąsiedztwo obecnie badanego rozwiazania
-                # for (x, y) in Ncopy:
-                # zaktualizuj liste tabu dla current_route[x], current_route[y]
     for x, y in neighbor_set_copy:
         tabu[current_route[x] - 1] = i
         tabu[current_route[y] - 1] = i
@@ -139,5 +172,7 @@ for i in range(0, iterations):
         best_route = list(best_neighbor_route)
         best_cost = best_neighbor_cost
 
-#print(best_route)
+# print(best_route)
 print(best_cost)
+end = time()
+print(end - start)
