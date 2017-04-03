@@ -1,6 +1,7 @@
 import sys
 import math
 from random import randint
+from random import shuffle
 from time import time
 
 start = time()
@@ -68,9 +69,9 @@ best_cost = current_cost
 neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in (x + 1, len(current_route) - 2)]
 
 # TSP TABU-SEARCH START
-iterations = 5000
+iterations = n
 checks = (math.sqrt(len(neighbor_set)))
-p = (math.sqrt(n))
+p = (math.sqrt(n/20))
 
 tabu = [-p] * n
 
@@ -160,9 +161,14 @@ for i in range(0, iterations):
                 best_neighbor_route = list(current_route)
                 best_neighbor_route[x], best_neighbor_route[y] = best_neighbor_route[y], best_neighbor_route[x]
                 best_neighbor_cost = neighbor_cost
+               # if neighbor_cost <= best_cost: break
 
         tabu[current_route[x] - 1] = i
         tabu[current_route[y] - 1] = i
+
+    if len(neighbor_set_copy) == 0:
+        #shuffle(current_route)
+        break
 
     for x, y in neighbor_set_copy:
         tabu[current_route[x] - 1] = i
