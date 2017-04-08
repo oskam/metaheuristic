@@ -1,6 +1,5 @@
 import sys
 import math
-from random import randint
 from random import shuffle
 from time import time
 
@@ -10,12 +9,7 @@ in_data = sys.stdin.readlines()
 n = int(float(in_data[0]))
 data = [[float(l) for l in line.split()[1:]] for line in in_data[1:]]
 
-# print(n)
-# print(data)
-
 distance = [[math.hypot(x2 - x1, y2 - y1) for (x2, y2) in data] for (x1, y1) in data]
-
-# print(distance)
 
 inf = float('inf')
 
@@ -31,7 +25,6 @@ for i in range(0, len(distance)):
 
 for i, _ in enumerate(distance_copy):
     distance_copy[i][i] = inf
-
 
 # returns index of minimum value in row `k` of `matrix`
 def index_min(matrix, k):
@@ -58,22 +51,18 @@ for i in range(1, len(current_route) - 1):
 for j in range(0, len(current_route) - 1):
     current_cost += distance[current_route[j] - 1][current_route[j + 1] - 1]
 
-# for k in current_route:
-#     sys.stderr.write(str(k) + "\n")
-
-print(current_cost)
+# print(current_cost)
 
 best_route = list(current_route)
 best_cost = current_cost
 
-neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in (x + 1, len(current_route) - 2)]
+neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in range(x + 1, len(current_route) - 2)]
 
-# TSP TABU-SEARCH START
-iterations = n
-checks = (math.sqrt(len(neighbor_set)))
-p = (math.sqrt(n/20))
+iterations = int(n)
+neighbors_to_check = (math.sqrt(len(neighbor_set)))
+penalty_length = math.ceil(math.log10(n))
 
-tabu = [-p] * n
+tabu = [-penalty_length] * n
 
 neighbor_route = [0] * (n + 1)
 neighbor_cost = 0
@@ -81,48 +70,17 @@ neighbor_cost = 0
 best_neighbor_route = list(best_route)
 best_neighbor_cost = best_cost
 
-
-def random_indexes(neighbor):
-    x = randint(0, len(neighbor) - 1)
-    return neighbor.pop(x)
-
-
 def is_tabbed(x, y, iteration):
-    return iteration - tabu[x] < p or iteration - tabu[y] < p
+    return (iteration - tabu[x]) < penalty_length and (iteration - tabu[y]) < penalty_length
 
 
 def is_aspiring(x, y, cost, iteration):
-    p_percent_left = (p-min(iteration - tabu[x], iteration - tabu[y]))/p
-    return cost < best_neighbor_cost * (1.0 + p_percent_left)
+    return cost < best_neighbor_cost
 
 
-def swap(current, x, y):
-    perm = list(current)
-    perm[x], perm[y] = current[y], current[x]
-    perm[y] = current[x]
-    return perm
+max_time = 0.08*n+10
 
-
-def count_cost(new_perm):
-    cost = 0
-    for x in range(0, len(new_perm) - 1):
-        cost += distance[new_perm[x] - 1][new_perm[x + 1] - 1]
-    return cost
-
-
-# def update_cost(old_route, old_cost, x, y):
-#     return old_cost \
-#            - distance[old_route[x]-1][old_route[x+1]-1] \
-#            - distance[old_route[x-1]-1][old_route[x]-1] \
-#            - distance[old_route[y]-1][old_route[y+1]-1] \
-#            - distance[old_route[y-1]-1][old_route[y]-1] \
-#            + distance[old_route[y]-1][old_route[x-1]-1] \
-#            + distance[old_route[y]-1][old_route[x+1]-1] \
-#            + distance[old_route[x]-1][old_route[y-1]-1] \
-#            + distance[old_route[x]-1][old_route[y+1]-1]
-
-
-print(time() - start)
+# print(time() - start)
 
 for i in range(0, iterations):
 
@@ -130,55 +88,66 @@ for i in range(0, iterations):
     current_cost = best_neighbor_cost
 
     neighbor_set_copy = list(neighbor_set)
+    shuffle(neighbor_set_copy)
 
-    checked = 0
+    checked_allowed_moves = 0
 
-    while checked < int(math.ceil(checks)) and len(neighbor_set_copy) > 0:
-        x, y = random_indexes(neighbor_set_copy)
-        x, y = int(x), int(y)
+    while checked_allowed_moves < int(math.ceil(neighbors_to_check)) and len(neighbor_set_copy) > 0:
+        x, y = neighbor_set_copy.pop()
+
+        xx = current_route[x] - 1
+        xp = current_route[x + 1] - 1
+        xm = current_route[x - 1] - 1
+        yy = current_route[y] - 1
+        yp = current_route[y + 1] - 1
+        ym = current_route[y - 1] - 1
 
         if y - x > 1:
             neighbor_cost = current_cost \
-                            - distance[current_route[x] - 1][current_route[x + 1] - 1] \
-                            - distance[current_route[x - 1] - 1][current_route[x] - 1] \
-                            - distance[current_route[y] - 1][current_route[y + 1] - 1] \
-                            - distance[current_route[y - 1] - 1][current_route[y] - 1] \
-                            + distance[current_route[y] - 1][current_route[x - 1] - 1] \
-                            + distance[current_route[y] - 1][current_route[x + 1] - 1] \
-                            + distance[current_route[x] - 1][current_route[y - 1] - 1] \
-                            + distance[current_route[x] - 1][current_route[y + 1] - 1]
+                            - distance[xx][xp] \
+                            - distance[xm][xx] \
+                            - distance[yy][yp] \
+                            - distance[ym][yy] \
+                            + distance[yy][xm] \
+                            + distance[yy][xp] \
+                            + distance[xx][ym] \
+                            + distance[xx][yp]
         else:
             neighbor_cost = current_cost \
-                            - distance[current_route[x - 1] - 1][current_route[x] - 1] \
-                            - distance[current_route[y] - 1][current_route[y + 1] - 1] \
-                            + distance[current_route[y] - 1][current_route[x - 1] - 1] \
-                            + distance[current_route[x] - 1][current_route[y + 1] - 1]
+                            - distance[xm][xx] \
+                            - distance[yy][yp] \
+                            + distance[yy][xm] \
+                            + distance[xx][yp]
 
-        if not is_tabbed(current_route[x] - 1, current_route[y] - 1, i) \
-                or is_aspiring(current_route[x] - 1, current_route[y] - 1, neighbor_cost, i):
-            checked += 1
-            if neighbor_cost <= best_neighbor_cost:
+        if (not is_tabbed(xx, yy, i)) or is_aspiring(xx, yy, neighbor_cost, i):
+
+            if neighbor_cost <= best_neighbor_cost or checked_allowed_moves == 0:
                 best_neighbor_route = list(current_route)
                 best_neighbor_route[x], best_neighbor_route[y] = best_neighbor_route[y], best_neighbor_route[x]
                 best_neighbor_cost = neighbor_cost
-               # if neighbor_cost <= best_cost: break
 
-        tabu[current_route[x] - 1] = i
-        tabu[current_route[y] - 1] = i
+            checked_allowed_moves += 1
 
-    if len(neighbor_set_copy) == 0:
-        #shuffle(current_route)
-        break
+        tabu[xx] = i
+        tabu[yy] = i
 
-    for x, y in neighbor_set_copy:
-        tabu[current_route[x] - 1] = i
-        tabu[current_route[y] - 1] = i
+
+    # for x, y in neighbor_set_copy:
+    #     tabu[current_route[x] - 1] = i
+    #     tabu[current_route[y] - 1] = i
 
     if best_neighbor_cost <= best_cost:
         best_route = list(best_neighbor_route)
         best_cost = best_neighbor_cost
+    elif len(neighbor_set_copy) == 0:
+        break
 
-# print(best_route)
+    if time() - start > max_time:
+        break
+
+# end = time()
+# print(end - start)
+
 print(best_cost)
-end = time()
-print(end - start)
+for k in best_route:
+    sys.stderr.write(str(k) + " ")
