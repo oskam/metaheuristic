@@ -45,6 +45,7 @@ for i in range(1, len(current_route) - 1):
     current_node = current_route[i]
     distance_copy[int(current_node) - 1][0] = inf
 
+    #forbid returns in next step to nodes already visited
     for determined_route_node in range(i + 1):
         distance_copy[int(current_node) - 1][current_route[determined_route_node] - 1] = inf
 
@@ -62,6 +63,8 @@ iterations = int(n)
 neighbors_to_check = (math.sqrt(len(neighbor_set)))
 penalty_length = math.ceil(math.log10(n))
 
+# node is not tabbed when iteration - tabu[x] >= penalty_length,
+# so when iteration < penalty_length we make sure that every node is untabbed by default
 tabu = [-penalty_length] * n
 
 neighbor_route = [0] * (n + 1)
@@ -74,7 +77,7 @@ def is_tabbed(x, y, iteration):
     return (iteration - tabu[x]) < penalty_length and (iteration - tabu[y]) < penalty_length
 
 
-def is_aspiring(x, y, cost, iteration):
+def is_aspiring(cost):
     return cost < best_neighbor_cost
 
 
@@ -119,10 +122,10 @@ for i in range(0, iterations):
                             + distance[yy][xm] \
                             + distance[xx][yp]
 
-        if (not is_tabbed(xx, yy, i)) or is_aspiring(xx, yy, neighbor_cost, i):
+        if (not is_tabbed(xx, yy, i)) or is_aspiring(neighbor_cost):
 
             if neighbor_cost <= best_neighbor_cost or checked_allowed_moves == 0:
-                best_neighbor_route = list(current_route)
+                best_neighbor_route = list(current_route) #we want to still look for neighbors of current_route, so we edit copy of it
                 best_neighbor_route[x], best_neighbor_route[y] = best_neighbor_route[y], best_neighbor_route[x]
                 best_neighbor_cost = neighbor_cost
 
