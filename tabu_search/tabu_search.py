@@ -125,7 +125,8 @@ for i in range(0, iterations):
         if (not is_tabbed(xx, yy, i)) or is_aspiring(neighbor_cost):
 
             if neighbor_cost <= best_neighbor_cost or checked_allowed_moves == 0:
-                best_neighbor_route = list(current_route) #we want to still look for neighbors of current_route, so we edit copy of it
+                # we want to still look for neighbors of current_route, so we edit copy of it
+                best_neighbor_route = list(current_route)
                 best_neighbor_route[x], best_neighbor_route[y] = best_neighbor_route[y], best_neighbor_route[x]
                 best_neighbor_cost = neighbor_cost
 
