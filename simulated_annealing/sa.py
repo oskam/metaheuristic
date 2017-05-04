@@ -74,15 +74,15 @@ t = 10
 alpha = 0.8
 
 
-def acceptance_probability(old_cost, new_cost, t):
-    a = (float((float(new_cost-old_cost))/(float(t))))
+def acceptance_probability(bst_cost, curr_cost, tm):
+    a = (float((float(curr_cost-bst_cost))/(float(tm))))
     return math.exp(-a)
 
 max_time = 0.08*n+10
 
 
-old_cost = best_cost
-j = 1
+# old_cost = best_cost
+
 while t >= 0.0000001:
     for i in range(iterations):
         neighbor_set_copy = list(neighbor_set)
@@ -116,15 +116,12 @@ while t >= 0.0000001:
 
         current_route[x], current_route[y] = current_route[y], current_route[x]
         current_cost = neighbor_cost
-        ap = acceptance_probability(old_cost, current_cost, t)
+        ap = acceptance_probability(best_cost, current_cost, t)
         if ap > random.uniform(0, 1):
             # best_route = current_route
-            old_cost = current_cost
-            j += 1
-            # print("j= ", j)
-        # print("new solution = ", current_route)
+            best_cost = current_cost
     t = t * alpha
-print("T final = ", t)
+print("T = ", t)
 
 
 # print(time() - start)
