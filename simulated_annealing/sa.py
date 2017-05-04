@@ -1,6 +1,7 @@
 import sys
 import math
-from random import shuffle
+import random
+# from random import shuffle
 from time import time
 
 start = time()
@@ -52,7 +53,7 @@ for i in range(1, len(current_route) - 1):
 for j in range(0, len(current_route) - 1):
     current_cost += distance[current_route[j] - 1][current_route[j + 1] - 1]
 
-# print(current_cost)
+print(current_cost)
 
 best_route = list(current_route)
 best_cost = current_cost
@@ -69,13 +70,64 @@ neighbor_cost = 0
 best_neighbor_route = list(best_route)
 best_neighbor_cost = best_cost
 
+t = 10
+alpha = 0.8
+
+
+def acceptance_probability(old_cost, new_cost, t):
+    a = (float((float(new_cost-old_cost))/(float(t))))
+    return math.exp(-a)
 
 max_time = 0.08*n+10
 
+
+old_cost = best_cost
+j = 1
+while t >= 0.0000001:
+    for i in range(iterations):
+        neighbor_set_copy = list(neighbor_set)
+        random.shuffle(neighbor_set_copy)
+
+        x, y = neighbor_set_copy.pop()
+
+        xx = current_route[x] - 1
+        xp = current_route[x + 1] - 1
+        xm = current_route[x - 1] - 1
+        yy = current_route[y] - 1
+        yp = current_route[y + 1] - 1
+        ym = current_route[y - 1] - 1
+
+        if y - x > 1:
+            neighbor_cost = current_cost \
+                            - distance[xx][xp] \
+                            - distance[xm][xx] \
+                            - distance[yy][yp] \
+                            - distance[ym][yy] \
+                            + distance[yy][xm] \
+                            + distance[yy][xp] \
+                            + distance[xx][ym] \
+                            + distance[xx][yp]
+        else:
+            neighbor_cost = current_cost \
+                            - distance[xm][xx] \
+                            - distance[yy][yp] \
+                            + distance[yy][xm] \
+                            + distance[xx][yp]
+
+        current_route[x], current_route[y] = current_route[y], current_route[x]
+        current_cost = neighbor_cost
+        ap = acceptance_probability(old_cost, current_cost, t)
+        if ap > random.uniform(0, 1):
+            # best_route = current_route
+            old_cost = current_cost
+            j += 1
+            # print("j= ", j)
+        # print("new solution = ", current_route)
+    t = t * alpha
+print("T final = ", t)
+
+
 # print(time() - start)
-
-
-
 # end = time()
 # print(end - start)
 
