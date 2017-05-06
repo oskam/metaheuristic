@@ -58,69 +58,77 @@ print(current_cost)
 best_route = list(current_route)
 best_cost = current_cost
 
-neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in range(x + 1, len(current_route) - 2)]
+# neighbor_set = [(x, y) for x in range(1, len(current_route) - 3) for y in range(x + 1, len(current_route) - 2)]
 
-iterations = int(n)
-neighbors_to_check = (math.sqrt(len(neighbor_set)))
+
+# neighbors_to_check = (math.sqrt(len(neighbor_set)))
 
 
 neighbor_route = [0] * (n + 1)
-neighbor_cost = 0
+next_cost = 0
 
 best_neighbor_route = list(best_route)
 best_neighbor_cost = best_cost
 
-t = 10
-alpha = 0.8
+iterations = int(n)
+t0 = 100
+t = t0
+end_factor = 0.00001
+t_alpha = 0.99995
+reheat_factor = 0.1
 
 
-def acceptance_probability(bst_cost, curr_cost, tm):
-    a = (float((float(curr_cost-bst_cost))/(float(tm))))
+def acceptance_probability(old_cost, new_cost, tm):
+    a = (float((float(new_cost - old_cost)) / (float(tm))))
     return math.exp(-a)
 
 max_time = 0.08*n+10
-
+random.seed()
 
 # old_cost = best_cost
 
-while t >= 0.0000001:
-    for i in range(iterations):
-        neighbor_set_copy = list(neighbor_set)
-        random.shuffle(neighbor_set_copy)
+while t > t0*end_factor:
+    # neighbor_set_copy = list(neighbor_set)
+    # random.shuffle(neighbor_set_copy)
 
-        x, y = neighbor_set_copy.pop()
+    # x, y = neighbor_set_copy.pop()
+    x = random.randint(1, len(current_route) - 4)
+    y = random.randint(x+1, len(current_route) - 3)
 
-        xx = current_route[x] - 1
-        xp = current_route[x + 1] - 1
-        xm = current_route[x - 1] - 1
-        yy = current_route[y] - 1
-        yp = current_route[y + 1] - 1
-        ym = current_route[y - 1] - 1
+    xx = current_route[x] - 1
+    xp = current_route[x + 1] - 1
+    xm = current_route[x - 1] - 1
+    yy = current_route[y] - 1
+    yp = current_route[y + 1] - 1
+    ym = current_route[y - 1] - 1
 
-        if y - x > 1:
-            neighbor_cost = current_cost \
-                            - distance[xx][xp] \
-                            - distance[xm][xx] \
-                            - distance[yy][yp] \
-                            - distance[ym][yy] \
-                            + distance[yy][xm] \
-                            + distance[yy][xp] \
-                            + distance[xx][ym] \
-                            + distance[xx][yp]
-        else:
-            neighbor_cost = current_cost \
-                            - distance[xm][xx] \
-                            - distance[yy][yp] \
-                            + distance[yy][xm] \
-                            + distance[xx][yp]
+    if y - x > 1:
+        next_cost = current_cost \
+                    - distance[xx][xp] \
+                    - distance[xm][xx] \
+                    - distance[yy][yp] \
+                    - distance[ym][yy] \
+                    + distance[yy][xm] \
+                    + distance[yy][xp] \
+                    + distance[xx][ym] \
+                    + distance[xx][yp]
+    else:
+        next_cost = current_cost \
+                    - distance[xm][xx] \
+                    - distance[yy][yp] \
+                    + distance[yy][xm] \
+                    + distance[xx][yp]
 
+    if next_cost <= current_cost or acceptance_probability(current_cost, next_cost, t) > random.uniform(0, 1):
         current_route[x], current_route[y] = current_route[y], current_route[x]
-        current_cost = neighbor_cost
-        ap = acceptance_probability(best_cost, current_cost, t)
-        if ap > random.uniform(0, 1):
-            # best_route = current_route
-            best_cost = current_cost
-    t = t * alpha
+        current_cost = next_cost
+
+    if current_cost < best_cost:
+        best_route = current_route
+        best_cost = current_cost
+
+    t = t * t_alpha
+
 print("T = ", t)
 
 
@@ -129,5 +137,5 @@ print("T = ", t)
 # print(end - start)
 
 print(best_cost)
-for k in best_route:
-    sys.stderr.write(str(k) + " ")
+# for k in best_route:
+#     sys.stderr.write(str(k) + " ")
