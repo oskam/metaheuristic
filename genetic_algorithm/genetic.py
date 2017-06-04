@@ -5,7 +5,6 @@ from time import time
 
 start = time()
 
-
 def reproduction(parent1, parent2):
     x = random.randint(1, int(len(parent1) / 2))
     y = random.randint(x + 1, len(parent2) - 1)
@@ -36,7 +35,7 @@ def tournament(size):
         c = cost(population[x])
         if c < winner[0]:
             winner = (c, x)
-    return winner
+    return winner[1]
 
 
 def hill_climbing(route, rounds):
@@ -85,7 +84,7 @@ def greedy_solution():
 in_data = sys.stdin.readlines()
 
 NUM_CITIES = int(float(in_data[0]))
-POP_SIZE = int(math.ceil(math.sqrt(NUM_CITIES)))
+POP_SIZE = int(math.ceil(math.sqrt(NUM_CITIES)))*3
 
 data = [[float(l) for l in line.split()[1:NUM_CITIES + 1]] for line in in_data[1:NUM_CITIES + 1]]
 max_time = float(in_data[NUM_CITIES + 1])
@@ -114,19 +113,26 @@ for i in range(0, POP_SIZE):
         population[i][s:] = random.sample(population[i][s:], len(population[i][s:]))
         population[i][:e] = random.sample(population[i][:e], len(population[i][:e]))
 
+population[0] = greedy_sol
 new_population = [None for _ in range(0, POP_SIZE)]
 the_best = min(map(lambda x: (cost(population[x]), x), range(0, POP_SIZE)))
+
+# print(the_best[0])
 
 generation = 0
 
 TOURNAMENT_SIZE = int(math.ceil(POP_SIZE * 0.1))
-MAX_GENERATIONS = 1000
+MAX_GENERATIONS = math.ceil((10**6)*(1/NUM_CITIES))
 MUTATION_PROBABILITY = 0.01
 
-while time() - start < max_time - 1 and generation < MAX_GENERATIONS:
+while_time = 1.0
+stagnation = 0
+
+while time() - start < max_time - (2*while_time) and generation < int(MAX_GENERATIONS):
+    while_start = time()
     for i in range(0, POP_SIZE):
-        index1 = tournament(TOURNAMENT_SIZE)[1]
-        index2 = tournament(TOURNAMENT_SIZE)[1]
+        index1 = tournament(TOURNAMENT_SIZE)
+        index2 = tournament(TOURNAMENT_SIZE)
 
         offspring1 = mutation(reproduction(population[index2], population[index1]), MUTATION_PROBABILITY)
         offspring2 = mutation(reproduction(population[index1], population[index2]), MUTATION_PROBABILITY)
@@ -141,12 +147,19 @@ while time() - start < max_time - 1 and generation < MAX_GENERATIONS:
     best = min(map(lambda x: (cost(population[x]), x), range(0, POP_SIZE)))
 
     if best[0] < the_best[0]:
+        stagnation = 0
         the_best = best
-        print(str(the_best[0]) + "\t" + str(generation))
+        # print(str(the_best[0]) + "\t" + str(generation))
+    else:
+        stagnation += 1
+        if stagnation > int(math.ceil(MAX_GENERATIONS / 10)):
+            break
 
-        # print(best_cost)
-        # for k in best_route:
-        #     sys.stderr.write(str(k) + " ")
+    while_time = time() - while_start
 
-        # end = time()
-        # print(end - start)
+print(the_best[0])
+for k in ([1] + population[the_best[1]] + [1]):
+    sys.stderr.write(str(k) + " ")
+
+# end = time()
+# print(end - start)
