@@ -68,6 +68,20 @@ def hill_climbing(route, rounds):
 
     return route[1:len(route)-1]
 
+
+def greedy_solution():
+    left = [i + 1 for i in range(1, NUM_CITIES)]
+    greedy = [1]
+    while len(greedy) != NUM_CITIES:
+        closest = (math.inf, 0, 0)
+        for i, v in enumerate(left):
+            c = distance[greedy[len(greedy)-1]-1][v-1]
+            if c < closest[0]:
+                closest = (c, v, i)
+        greedy += [closest[1]]
+        left = left[:closest[2]] + left[closest[2]+1:]
+    return greedy[1:]
+
 in_data = sys.stdin.readlines()
 
 NUM_CITIES = int(float(in_data[0]))
@@ -80,8 +94,26 @@ distance = [[math.hypot(x2 - x1, y2 - y1) for (x2, y2) in data] for (x1, y1) in 
 data = None
 
 # population = [random.shuffle([i+1 for i in range(1, n)]) for _ in range(0, pop_size)]
-sequence = [i + 1 for i in range(1, NUM_CITIES)]
-population = [mutation(hill_climbing(random.sample(sequence, NUM_CITIES - 1), 10000), 0.01) for _ in range(0, POP_SIZE)]
+# sequence = [i + 1 for i in range(1, NUM_CITIES)]
+# print(greedy_solution())
+
+# population = [mutation(hill_climbing(random.sample(sequence, NUM_CITIES - 1), 1000), 0.01) for _ in range(0, POP_SIZE)]
+
+greedy_sol = greedy_solution()
+population = [mutation(list(greedy_sol), 0.005) for _ in range(0, POP_SIZE)]
+
+span = int(math.ceil((NUM_CITIES - 1) / 10))
+# span = 100
+
+for i in range(0, POP_SIZE):
+    s = (i*span) % (NUM_CITIES-1)
+    e = ((i+1)*span) % (NUM_CITIES-1)
+    if s < e:
+        population[i][s:e] = random.sample(population[i][s:e], len(population[i][s:e]))
+    else:
+        population[i][s:] = random.sample(population[i][s:], len(population[i][s:]))
+        population[i][:e] = random.sample(population[i][:e], len(population[i][:e]))
+
 new_population = [None for _ in range(0, POP_SIZE)]
 the_best = min(map(lambda x: (cost(population[x]), x), range(0, POP_SIZE)))
 
@@ -89,7 +121,7 @@ generation = 0
 
 TOURNAMENT_SIZE = int(math.ceil(POP_SIZE * 0.1))
 MAX_GENERATIONS = 1000
-MUTATION_PROBABILITY = 0.01
+MUTATION_PROBABILITY = 0.005
 
 while time() - start < max_time - 1 and generation < MAX_GENERATIONS:
     for i in range(0, POP_SIZE):
