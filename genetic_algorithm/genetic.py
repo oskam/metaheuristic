@@ -31,7 +31,7 @@ def cost(route):
 
 
 def tournament(size):
-    winner = (math.inf, 0)
+    winner = (float('inf'), 0)
     for x in random.sample(range(0, POP_SIZE), size):
         c = cost(population[x])
         if c < winner[0]:
@@ -73,7 +73,7 @@ def greedy_solution():
     left = [i + 1 for i in range(1, NUM_CITIES)]
     greedy = [1]
     while len(greedy) != NUM_CITIES:
-        closest = (math.inf, 0, 0)
+        closest = (float('inf'), 0, 0)
         for i, v in enumerate(left):
             c = distance[greedy[len(greedy)-1]-1][v-1]
             if c < closest[0]:
@@ -85,7 +85,7 @@ def greedy_solution():
 in_data = sys.stdin.readlines()
 
 NUM_CITIES = int(float(in_data[0]))
-POP_SIZE = int(math.ceil(math.sqrt(NUM_CITIES)))*4
+POP_SIZE = int(math.ceil(math.sqrt(NUM_CITIES)))
 
 data = [[float(l) for l in line.split()[1:NUM_CITIES + 1]] for line in in_data[1:NUM_CITIES + 1]]
 max_time = float(in_data[NUM_CITIES + 1])
@@ -121,7 +121,7 @@ generation = 0
 
 TOURNAMENT_SIZE = int(math.ceil(POP_SIZE * 0.1))
 MAX_GENERATIONS = 1000
-MUTATION_PROBABILITY = 0.005
+MUTATION_PROBABILITY = 0.01
 
 while time() - start < max_time - 1 and generation < MAX_GENERATIONS:
     for i in range(0, POP_SIZE):
